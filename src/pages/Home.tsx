@@ -1,3 +1,4 @@
+// Home.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Calendar, MapPin } from 'lucide-react';
@@ -27,6 +28,15 @@ export default function Home() {
               >
                 Book Now
               </Link>
+              {/* Join Employee Button */}
+
+        <Link
+          to="/employee"
+          className="bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition duration-300 ml-6"
+        >
+          Join TrainWay as Employee
+        </Link>
+
             </div>
           </div>
         </div>

@@ -19,21 +19,22 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch('/api/auth/signup', {
+      const response = await fetch('http://localhost:3000/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        toast.success('Account created successfully!');
+        toast.success(data.message || 'Account created successfully!');
         navigate('/login');
       } else {
-        toast.error('Failed to create account');
+        toast.error(data.message || 'Failed to create account');
       }
     } catch (error) {
-      toast.error('Signup failed');
+      toast.error('Failed to connect to server');
     } finally {
       setLoading(false);
     }

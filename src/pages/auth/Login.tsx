@@ -21,18 +21,23 @@ export default function Login({ onLogin }: LoginProps) {
     setLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const mockUser = {
-        id: '1',
-        name: 'John Doe',
-        email: formData.email,
-      };
-      onLogin(mockUser);
-      toast.success('Login successful!');
-      navigate('/');
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        onLogin(data.user);
+        toast.success('Login successful!');
+        navigate('/');
+      } else {
+        toast.error(data.message || 'Invalid credentials');
+      }
     } catch (error) {
-      toast.error('Invalid credentials');
+      toast.error('Failed to connect to server');
     } finally {
       setLoading(false);
     }

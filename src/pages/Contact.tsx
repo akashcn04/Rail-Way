@@ -16,11 +16,30 @@ export default function Contact() {
     setLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Message sent successfully!');
-      setFormData({ name: '', email: '', phone: '', message: '' });
+      console.log('Sending data:', formData); // Log the form data before sending
+      
+      // Send the form data to the backend
+      const response = await fetch('http://localhost:3000/api/contactus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData), // Send form data as JSON
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        toast.success('Message sent successfully!');
+        setFormData({ name: '', email: '', phone: '', message: '' }); // Clear the form
+      } else {
+        // Log the error response from the backend
+        console.log('Error response from backend:', data);
+        toast.error(data.message || 'Failed to send message');
+      }
     } catch (error) {
+      // Log the error that occurred during the fetch request
+      console.error('Error while sending message:', error);
       toast.error('Failed to send message');
     } finally {
       setLoading(false);
@@ -53,7 +72,7 @@ export default function Contact() {
                   </div>
                   <div className="flex items-center">
                     <Phone className="h-5 w-5 text-indigo-600 mr-3" />
-                    <span className="text-gray-600">+1 (555) 123-4567</span>
+                    <span className="text-gray-600">+91 6360663654</span>
                   </div>
                 </div>
               </div>
