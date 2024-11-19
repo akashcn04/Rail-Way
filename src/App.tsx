@@ -9,9 +9,6 @@ import Stations from './pages/Stations';
 import Contact from './pages/Contact';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
-import History from './pages/account/History';
-import Payments from './pages/account/Payments';
-import Cancellations from './pages/account/Cancellations';
 import { User } from './types';
 import Employee from './pages/Employee';
 
@@ -39,18 +36,6 @@ function App() {
           <Route 
             path="/signup" 
             element={user ? <Navigate to="/" /> : <Signup />} 
-          />
-          <Route 
-            path="/history" 
-            element={user ? <History /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/payments" 
-            element={user ? <Payments /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/cancellations" 
-            element={user ? <Cancellations /> : <Navigate to="/login" />} 
           />
 
          <Route 

@@ -62,27 +62,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                       />
                       <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
                         <div className="py-1">
-                          <Link 
-                            to="/history" 
-                            onClick={() => setShowUserMenu(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            History
-                          </Link>
-                          <Link 
-                            to="/payments" 
-                            onClick={() => setShowUserMenu(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Payments
-                          </Link>
-                          <Link 
-                            to="/cancellations" 
-                            onClick={() => setShowUserMenu(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Cancellations
-                          </Link>
+                          
                           <button
                             onClick={() => {
                               setShowUserMenu(false);
@@ -168,27 +148,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
           {user && (
             <div className="pt-4 pb-3 border-t border-indigo-500">
               <div className="px-2 space-y-1">
-                <Link 
-                  to="/history" 
-                  onClick={() => setIsOpen(false)}
-                  className="text-white block hover:bg-indigo-500 px-3 py-2 rounded-md"
-                >
-                  History
-                </Link>
-                <Link 
-                  to="/payments" 
-                  onClick={() => setIsOpen(false)}
-                  className="text-white block hover:bg-indigo-500 px-3 py-2 rounded-md"
-                >
-                  Payments
-                </Link>
-                <Link 
-                  to="/cancellations" 
-                  onClick={() => setIsOpen(false)}
-                  className="text-white block hover:bg-indigo-500 px-3 py-2 rounded-md"
-                >
-                  Cancellations
-                </Link>
+              
                 <button
                   onClick={() => {
                     setIsOpen(false);

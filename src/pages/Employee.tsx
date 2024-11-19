@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 export default function Employee() {
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [position, setPosition] = useState('');
   const [contact, setContact] = useState('');
@@ -66,6 +68,7 @@ export default function Employee() {
 
       if (response.ok) {
         toast.success('Request sent successfully!');
+        navigate('/');
         setFormData({name: '', position: '', salary: 0, contact: '' }); // Clear the form
       } else {
         // Log the error response from the backend

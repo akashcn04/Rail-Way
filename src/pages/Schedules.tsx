@@ -71,7 +71,7 @@ export default function Schedule({ user }: ScheduleProps) {
 
         if (response.ok) {
             toast.success('Payment successful and ticket booked!');
-            navigate('/history');
+            navigate('/');
         } else {
             toast.error(data.message || 'Failed to book ticket');
         }

@@ -21,9 +21,10 @@ export default function PnrStatus() {
 
     try {
       // TODO: Replace with actual API call
-      const response = await fetch(`/api/pnr/${pnr}`);
+      const response = await fetch(`http://localhost:3000/api/pnr/${pnr}`);
       const data = await response.json();
       
+      console.log(data);
       if (response.ok) {
         setResult(data);
         toast.success('PNR details found!');
@@ -32,6 +33,7 @@ export default function PnrStatus() {
         setResult(null);
       }
     } catch (error) {
+      console.log(error)
       toast.error('Failed to fetch PNR details');
     } finally {
       setLoading(false);
@@ -54,7 +56,6 @@ export default function PnrStatus() {
                 onChange={(e) => setPnr(e.target.value)}
                 placeholder="Enter 10-digit PNR number"
                 className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                pattern="\d{10}"
                 required
               />
               <button
@@ -96,7 +97,7 @@ export default function PnrStatus() {
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Status</h3>
                   <p className={`mt-1 text-lg font-semibold ${
-                    result.status === 'Confirmed' ? 'text-green-600' : 'text-red-600'
+                    result.status === 'confirmed' ? 'text-green-600' : 'text-red-600'
                   }`}>
                     {result.status}
                   </p>

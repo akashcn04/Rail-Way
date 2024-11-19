@@ -426,3 +426,43 @@ app.get('/api/bookings', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch booking history' });
   }
 });
+
+app.get('/api/pnr/:pnr', async (req, res) => {
+  const { pnr } = req.params;
+
+  const query = `
+    SELECT
+      b.seat_number AS seatNumber,
+      b.status,
+      s.departure_station AS boardingStation,
+      u.name AS passengerName,
+      t.name AS trainName
+    FROM
+      bookings b
+    JOIN
+      schedules s ON b.schedule_id = s.id
+    JOIN
+      users u ON b.user_id = u.id
+    JOIN
+      trains t ON s.train_id = t.id
+    WHERE
+      b.pnr = ?;
+  `;
+
+  try {
+    // Use pool.query() for database interaction
+    const [results] = await pool.query(query, [pnr]);
+
+    // Check if any result was returned
+    if (results.length > 0) {
+      // Send the result as the response
+      res.json(results[0]);
+    } else {
+      // If no booking found, send an error response
+      res.status(404).json({ success: false, message: 'PNR not found' });
+    }
+  } catch (error) {
+    console.error('Error executing query:', error);
+    res.status(500).json({ success: false, message: 'Database query failed' });
+  }
+});

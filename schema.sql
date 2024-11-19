@@ -80,18 +80,6 @@ CREATE TABLE Employee (
 );
 
 
--- Refunds table
--- CREATE TABLE refunds (
---   id VARCHAR(36) PRIMARY KEY,
---   payment_id VARCHAR(36) NOT NULL,
---   amount DECIMAL(10, 2) NOT NULL,
---   status ENUM('pending', 'processed', 'failed') DEFAULT 'pending',
---   reason TEXT NOT NULL,
---   processed_at TIMESTAMP,
---   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---   FOREIGN KEY (payment_id) REFERENCES payments(id)
--- );
-
 CREATE TABLE stations (
     id   VARCHAR(100) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -129,6 +117,9 @@ BEGIN
       'status', NEW.status
     )
   );
+
+-- Finds the train ID for the train named "train1".
+-- Uses the train ID obtained from the inner query to fetch the schedule ID.
 END//
 
 -- Trigger to update available seats after cancellation
@@ -160,50 +151,6 @@ BEGIN
   END IF;
 END//
 
--- Trigger to track payment status changes
-CREATE TRIGGER after_payment_insert
-AFTER INSERT ON payments
-FOR EACH ROW
-BEGIN
-  INSERT INTO history (id, user_id, action_type, reference_id, description, metadata)
-  SELECT 
-    UUID(),
-    b.user_id,
-    'payment',
-    NEW.id,
-    CONCAT('Payment ', NEW.status, ' for booking'),
-    JSON_OBJECT(
-      'amount', NEW.amount,
-      'payment_method', NEW.payment_method,
-      'status', NEW.status,
-      'transaction_id', NEW.transaction_id
-    )
-  FROM bookings b
-  WHERE b.id = NEW.booking_id;
-END//
-
--- Trigger to track refund status changes
--- CREATE TRIGGER after_refund_insert
--- AFTER INSERT ON refunds
--- FOR EACH ROW
--- BEGIN
---   INSERT INTO history (id, user_id, action_type, reference_id, description, metadata)
---   SELECT 
---     UUID(),
---     b.user_id,
---     'refund',
---     NEW.id,
---     CONCAT('Refund ', NEW.status, ' for payment'),
---     JSON_OBJECT(
---       'amount', NEW.amount,
---       'status', NEW.status,
---       'reason', NEW.reason
---     )
---   FROM payments p
---   JOIN bookings b ON b.id = p.booking_id
---   WHERE p.id = NEW.payment_id;
--- END//
-
 -- Stored procedure for booking a ticket
 CREATE PROCEDURE book_ticket(
   IN p_user_id VARCHAR(36),
@@ -231,9 +178,15 @@ BEGIN
   SET v_booking_id = UUID();
   SET v_payment_id = UUID();
   
-  -- Create booking
+-- nested query to insert to booking table
   INSERT INTO bookings (id, pnr, user_id, schedule_id, seat_number)
-  VALUES (v_booking_id, v_pnr, p_user_id, p_schedule_id, 'AUTO');
+  VALUES (
+  UUID(),
+  CONCAT('PNR', LPAD(FLOOR(RAND() * 1000000), 6, '0')),
+  'some-user-id',
+  (SELECT id FROM schedules WHERE train_id = (SELECT id FROM trains WHERE name = 'Express 101') LIMIT 1),
+  '1A'
+);
   
   -- Create payment
   INSERT INTO payments (id, booking_id, amount, payment_method, transaction_id)
@@ -257,62 +210,80 @@ END//
 
 -- Function to get PNR status
 CREATE FUNCTION get_pnr_status(p_pnr VARCHAR(10))
-RETURNS VARCHAR(50)
+RETURNS VARCHAR(255)
 DETERMINISTIC
 BEGIN
   DECLARE v_status VARCHAR(50);
-  
+  DECLARE v_train_name VARCHAR(100);
+  DECLARE v_user_name VARCHAR(100);
+  DECLARE v_departure_station VARCHAR(100);
+  DECLARE v_seat_number VARCHAR(10);
+  DECLARE v_train_id INT;
+
+  -- Get the booking status and details
   SELECT 
     CASE
       WHEN b.status = 'cancelled' THEN 'Cancelled'
       WHEN b.status = 'confirmed' AND s.departure_time > NOW() THEN 'Confirmed'
       WHEN b.status = 'confirmed' AND s.departure_time <= NOW() THEN 'Completed'
       ELSE 'Not Found'
-    END INTO v_status
-  FROM bookings b
-  JOIN schedules s ON s.id = b.schedule_id
-  WHERE b.pnr = p_pnr;
+    END,
+    b.seat_number, 
+    s.departure_station,
+    s.train_id
+  INTO 
+    v_status, v_seat_number, v_departure_station, v_train_id
+  FROM
+    bookings b
+  JOIN
+    schedules s ON b.schedule_id = s.id
+  WHERE
+    b.pnr = p_pnr;
   
-  RETURN COALESCE(v_status, 'Not Found');
-END//
+  -- If booking found, get train name and user name
+  IF v_status IS NOT NULL THEN
+    -- Get train name
+    SELECT t.name INTO v_train_name
+    FROM trains t
+    WHERE t.id = v_train_id;
 
--- Stored procedure to process refund
-CREATE PROCEDURE process_refund(
-  IN p_booking_id VARCHAR(36),
-  IN p_reason TEXT
-)
-BEGIN
-  DECLARE v_payment_id VARCHAR(36);
-  DECLARE v_amount DECIMAL(10, 2);
-  
-  -- Start transaction
-  START TRANSACTION;
-  
-  -- Get payment details
-  SELECT id, amount INTO v_payment_id, v_amount
-  FROM payments
-  WHERE booking_id = p_booking_id
-  AND status = 'completed'
-  LIMIT 1;
-  
-  IF v_payment_id IS NOT NULL THEN
-    -- Create refund record
-    INSERT INTO refunds (id, payment_id, amount, reason)
-    VALUES (UUID(), v_payment_id, v_amount, p_reason);
+    -- Get user name
+    SELECT u.name INTO v_user_name
+    FROM users u
+    JOIN bookings b ON u.id = b.user_id
+    WHERE b.pnr = p_pnr;
     
-    -- Update payment status
-    UPDATE payments
-    SET status = 'refunded'
-    WHERE id = v_payment_id;
+    -- Return a comprehensive status message
+    RETURN CONCAT('PNR: ', p_pnr, 
+                  ', Status: ', v_status, 
+                  ', Seat Number: ', v_seat_number, 
+                  ', Train: ', v_train_name, 
+                  ', Departure Station: ', v_departure_station, 
+                  ', User: ', v_user_name);
+  ELSE
+    RETURN 'Not Found';
   END IF;
-  
-  -- Commit transaction
-  COMMIT;
 END//
 
-DELIMITER ;
 
--- Inserting data for trains and schedules
+-- to get total revenue per schedule [aggregate function]
+SELECT 
+    s.id AS id,
+    s.departure_station,
+    s.arrival_station,
+    COUNT(b.id) AS total_tickets_sold,
+    SUM(p.amount) AS total_revenue
+FROM 
+    schedules s
+LEFT JOIN 
+    bookings b ON s.id = b.schedule_id
+LEFT JOIN 
+    payments p ON b.id = p.booking_id
+GROUP BY 
+    s.id, s.departure_station, s.arrival_station;
+
+
+-- Inserting data for trains and schedules [samples]
 INSERT INTO trains (id, name, total_seats, available_seats) VALUES
 (UUID(), 'Express 101', 30, 30),
 (UUID(), 'Superfast 202', 30, 30),
