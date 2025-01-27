@@ -10,7 +10,7 @@ export default function Home() {
       <div 
         className="relative bg-cover bg-center h-[600px]"
         style={{
-          backgroundImage: 'url("https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&q=80")',
+          backgroundImage: `url('/assets/railway.jpeg')`,
         }}
       >
         <div className="absolute inset-0 bg-black bg-opacity-50">
